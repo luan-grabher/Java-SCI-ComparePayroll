@@ -8,10 +8,14 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import org.ini4j.Ini;
 
-public class Contracheques_Model {
+public class Contracheques_Model {    
 
     private final File arquivo;
+    private final Map<String, Contracheque> payrolls = new TreeMap<>();
     private List<Contracheque> contracheques = new ArrayList<>();
 
     public Contracheques_Model(File arquivo) {
@@ -25,21 +29,27 @@ public class Contracheques_Model {
     }
     
     private void criarListaContracheques() {
+        //Pega texto do arquivo
         String textoArquivo = FileManager.getText(arquivo.getAbsolutePath());
 
+        //Pega linhas do arquivo, 0 limite de "-1" diz que irá pegar as linhas após o ultimo valor, mesmo que estejam vazias
         String[] linhas = textoArquivo.split("\r\n", -1);
         int max = linhas.length - 1;
 
         /*Loading*/
         Loading loading = new Loading("Criando lista de contracheques", 0, max);
 
-        String nomeArquivo = arquivo.getName();
-
+        //Define a variável que irá controlar o contracheque atual
+        String payrollNow = "";
         Contracheque contrachequeAtual = null;
         for (int i = 0; i <= max; i++) {
             try {
+                //Atualiza a barra de loading
                 loading.updateBar(i + " de " + max, i);
+                
+               
 
+                //Pega colunas, 0 limite de "-1" diz que irá pegar as colunas após o ultimo valor, mesmo que estejam vazias
                 String[] colunas = linhas[i].split(";", -1);
 
                 //Se tiver numero nas 3 primeiras colunas, é novo contracheque
