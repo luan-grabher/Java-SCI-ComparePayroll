@@ -23,17 +23,18 @@ public class Comparar_Control {
         
         
         /*Monta texto de restorno*/
-        String textoCsv = modelo.getDemitidos() + "\r\n" 
-                + modelo.getAdmitidos() 
-                + modelo.renderDiferencas(resumo_1_arquivo.getName().replaceAll(".csv", ""), resumo_2_arquivo.getName().replaceAll(".csv", ""));
+        StringBuilder log = new StringBuilder("Log\r\n\r\n");
         
+        log.append(modelo.getDemitidos()).append("\r\n");
+        log.append(modelo.getAdmitidos());
+        log.append(modelo.renderDiferencas(resumo_1_arquivo.getName().replaceAll(".csv", ""), resumo_2_arquivo.getName().replaceAll(".csv", "")));        
         
         String save_path = local_salvar.getAbsolutePath()
                 + "\\Diferencas folha " 
                 + resumo_1_arquivo.getName().replaceAll(".csv", "")
                 + " - "
                 + resumo_2_arquivo.getName().replaceAll(".csv", "") + ".csv";
-        FileManager.save(save_path , textoCsv);
+        FileManager.save(save_path , log.toString());
         
         View.render("Programa terminado!\nArquivo salvo em:\n" + save_path);
     }
