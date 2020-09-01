@@ -1,4 +1,4 @@
-package Model.Entity;
+package ComparePayroll.Model.Entity;
 
 import java.util.ArrayList;
 import java.util.List;

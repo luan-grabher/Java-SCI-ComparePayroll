@@ -1,14 +1,13 @@
-package Model;
+package ComparePayroll.Model;
 
-import Model.Entity.Contracheque;
-import Model.Entity.Evento;
+import ComparePayroll.Model.Entity.Contracheque;
+import ComparePayroll.Model.Entity.Evento;
 import SimpleView.Loading;
+import fileManager.FileManager;
 import java.io.File;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import main.Arquivo;
 
 public class Contracheques_Model {
 
@@ -26,25 +25,20 @@ public class Contracheques_Model {
     }
     
     private void criarListaContracheques() {
-        String textoArquivo = Arquivo.ler(arquivo.getAbsolutePath());
+        String textoArquivo = FileManager.getText(arquivo.getAbsolutePath());
 
         String[] linhas = textoArquivo.split("\r\n", -1);
         int max = linhas.length - 1;
 
         /*Loading*/
-        Loading carregamento = new Loading();
-        carregamento.setVisible(true);
-        Loading.barra.setMinimum(0);
-        Loading.barra.setMaximum(max);
-        Loading.barra.setValue(0);
+        Loading loading = new Loading("Criando lista de contracheques", 0, max);
 
         String nomeArquivo = arquivo.getName();
 
         Contracheque contrachequeAtual = null;
         for (int i = 0; i <= max; i++) {
             try {
-                Loading.barra.setValue(i);
-                Loading.texto.setText("Criando lista de contracheques " + nomeArquivo + " - " + i + " de " + max);
+                loading.updateBar(i + " de " + max, i);
 
                 String[] colunas = linhas[i].split(";", -1);
 
@@ -99,7 +93,7 @@ public class Contracheques_Model {
         }
         
         //Fecha carregamento
-        carregamento.dispose();
+        loading.dispose();
     }
     
     private Evento getEvento(String[] colunas, int colunaCodigo, int colunaNome, int colunaValor, int colunaReferencia){

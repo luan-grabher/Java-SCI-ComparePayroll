@@ -1,6 +1,6 @@
 package main;
 
-import Model.Entity.Contracheque;
+import ComparePayroll.Model.Entity.Contracheque;
 import java.math.BigDecimal;
 
 public class Teste {

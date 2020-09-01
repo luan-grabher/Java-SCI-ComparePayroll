@@ -1,10 +1,10 @@
-package Control;
+package ComparePayroll.Control;
 
-import Model.Comparar_Model;
-import Model.Contracheques_Model;
+import ComparePayroll.Model.Comparar_Model;
+import ComparePayroll.Model.Contracheques_Model;
 import java.io.File;
-import main.Arquivo;
 import SimpleView.View;
+import fileManager.FileManager;
 
 public class Comparar_Control {
 
@@ -33,7 +33,7 @@ public class Comparar_Control {
                 + resumo_1_arquivo.getName().replaceAll(".csv", "")
                 + " - "
                 + resumo_2_arquivo.getName().replaceAll(".csv", "") + ".csv";
-        Arquivo.salvar( save_path , textoCsv);
+        FileManager.save(save_path , textoCsv);
         
         View.render("Programa terminado!\nArquivo salvo em:\n" + save_path);
     }

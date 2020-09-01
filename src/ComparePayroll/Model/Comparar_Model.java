@@ -1,9 +1,9 @@
-package Model;
+package ComparePayroll.Model;
 
-import Model.Entity.Contracheque;
-import Model.Entity.Diferenca;
-import Model.Entity.DiferencasColaborador;
-import Model.Entity.Evento;
+import ComparePayroll.Model.Entity.Contracheque;
+import ComparePayroll.Model.Entity.Diferenca;
+import ComparePayroll.Model.Entity.DiferencasColaborador;
+import ComparePayroll.Model.Entity.Evento;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
