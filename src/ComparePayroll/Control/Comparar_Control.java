@@ -10,6 +10,8 @@ public class Comparar_Control {
 
     private final Contracheques_Model resumo_1_contracheques_model;
     private final Contracheques_Model resumo_2_contracheques_model;
+    
+    public static final StringBuilder log = new StringBuilder("Log\r\n\r\n");
 
     public Comparar_Control(File resumo_1_arquivo, File resumo_2_arquivo, File local_salvar) {
 
@@ -22,8 +24,7 @@ public class Comparar_Control {
         );
         
         
-        /*Monta texto de restorno*/
-        StringBuilder log = new StringBuilder("Log\r\n\r\n");
+        /*Monta texto de restorno*/        
         
         log.append(modelo.getDemitidos()).append("\r\n");
         log.append(modelo.getAdmitidos());

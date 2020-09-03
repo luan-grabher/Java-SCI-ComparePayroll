@@ -1,6 +1,7 @@
 package ComparePayroll.Model;
 
 import ComparePayroll.ComparePayroll;
+import ComparePayroll.Control.Comparar_Control;
 import ComparePayroll.Model.Entity.Contracheque;
 import ComparePayroll.Model.Entity.Evento;
 import SimpleView.Loading;
@@ -23,6 +24,7 @@ public class Contracheques_Model {
 
     private final File arquivo;
     private final Map<String, Contracheque> payrolls = new TreeMap<>();
+    private Integer payrollsFinded = 0;
 
     //Mapeamento de colunas
     private static final Map<String, Integer> mapCols = new HashMap<>();
@@ -31,13 +33,18 @@ public class Contracheques_Model {
         this.arquivo = arquivo;
 
         criarListaContracheques();
+
+        Comparar_Control.log.append("\r\nNo arquivo '").append(arquivo.getName()).append("':");
+        Comparar_Control.log.append("\r\nForam encontradas ").append(payrollsFinded).append(" folhas de pagamento.");
+        Comparar_Control.log.append("\r\nConsiderei ").append(payrolls.size()).append(" folhas de pagamento nos cálculos.");
+        Comparar_Control.log.append("\r\n\r\n");
     }
 
     public List<Contracheque> getContracheques() {
         //Cria uma lista para retornar
         //Essa conversão pra lista só existe porque fiz a alteração no programa para funcioonar as colunas e o resto do programa usa lista e eu nao quero olhar o resto do programa
-        List<Contracheque> list =  new ArrayList<>();
-        
+        List<Contracheque> list = new ArrayList<>();
+
         //Percorre todas folhas e coloca na lista
         payrolls.entrySet().forEach((entry) -> {
             list.add(entry.getValue());
@@ -89,14 +96,6 @@ public class Contracheques_Model {
                 }//Se a primeira coluna for "Folha"
                 else if (updateMapOfColumnIfExists("sheet", colunas, STRING_COMPARE_EQUALS)) {
                     //Define bases
-                    /**
-                     *
-                     *
-                     * ALTERAR AQUI
-                     *
-                     *
-                     */
-
                     payrolls.get(payrollNow).setBaseInss(getBigDecimal(colunas[mapCols.get("inss_base")]));
                     payrolls.get(payrollNow).setValorInss(getBigDecimal(colunas[mapCols.get("inss_value")]));
                     payrolls.get(payrollNow).setBaseFgts(getBigDecimal(colunas[mapCols.get("fgts_base")]));
@@ -109,6 +108,9 @@ public class Contracheques_Model {
                     payrollNow = null;
                 } //Se atualizar a coluna de base salário, quer dizer que é um novo funcionário
                 else if (updateMapOfColumnIfExists("base_salary", colunas, STRING_COMPARE_REGEX)) {
+                    //Adiciona folha de pagamento encontradas para avisar
+                    payrollsFinded++;
+
                     //Se já tiver definido a coluna de nome
                     if (mapCols.containsKey("name")) {
                         //Adiciona uma nova folha de pagamento
@@ -203,15 +205,16 @@ public class Contracheques_Model {
      */
     private boolean updateMapOfColumnIfExists(String columnName, String[] cols, int stringCompareType, int skip) {
         Integer pos = -1;
+        String columnFilter = ComparePayroll.ini.get("ComparePayroll", "column_" + columnName);
         if (stringCompareType == STRING_COMPARE_REGEX) {
             //Se o tipo de comparação for regex, compara por regex
-            pos = Args.indexOf(ComparePayroll.ini.get("ComparePayroll", "column_" + columnName), cols, skip);
+            pos = Args.indexOf(columnFilter, cols, skip);
         } else if (stringCompareType == STRING_COMPARE_EQUALS) {
             //Se o tipo de comparação dor string igual, procura por iguais
-            pos = Args.indexOf(cols, ComparePayroll.ini.get("ComparePayroll", "column_" + columnName), skip);
+            pos = Args.indexOf(cols, columnFilter, skip);
         }
 
-        //Se encontrar alguma posição com a quele valor, retorna o valor
+        //Se encontrar alguma posição com aquele valor, retorna o valor
         if (pos > -1) {
             mapCols.put(columnName, pos);
             return true;
@@ -274,6 +277,7 @@ public class Contracheques_Model {
     /**
      * Converte uma string do csv para bigdecimal. fica apenas com numeros '.' e
      * ','. Troca as virgulas por pontos e remove os pontos de milhar
+     *
      * @param str String a ser converetida
      * @return BigDecimal convertido da string ou bugdecimal zero
      */
@@ -285,7 +289,6 @@ public class Contracheques_Model {
         }
     }
 
-     
     private boolean isInteger(String str) {
         return str.matches("[0-9]+");
     }

@@ -10,8 +10,8 @@ import org.ini4j.Ini;
 
 public class ComparePayroll {
 
-    private static File resumo_1_arquivo = null;
-    private static File resumo_2_arquivo = null;
+    private static File firstPayroll = new File("");
+    private static File secondPayroll = new File("");
 
     public static Ini ini;
 
@@ -19,34 +19,45 @@ public class ComparePayroll {
         //Define ini
         try {
             String inipath = Args.get(args, "ini_path");
-            ini = new Ini(new File(inipath == null?"config.ini":inipath));
+            ini = new Ini(new File(inipath == null ? "config.ini" : inipath));
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Não foi possivel encontrar o arquivo de configuração!");
             System.exit(0);
         }
 
-        String firstPayroll = Args.get(args, "firstPayroll");
-        String secondPayroll = Args.get(args, "secondPayroll");
+        //Se o arquivo ini existir
+        if (Args.get(args, "firstPayroll") != null && Args.get(args, "secondPayroll") != null) {
+            firstPayroll = new File(Args.get(args, "firstPayroll"));
+            secondPayroll = new File(Args.get(args, "secondPayroll"));
+        }
 
-        if (firstPayroll == null || secondPayroll == null && pegaArquivos()) {
-            Comparar_Control controleComparar = new Comparar_Control(resumo_1_arquivo, resumo_2_arquivo, new File(System.getProperty("user.home") + "/Desktop"));
-        } else {
-            if (Selector.verifyFile(firstPayroll, "csv") && Selector.verifyFile(secondPayroll, "csv")) {
-                Comparar_Control control = new Comparar_Control(new File(firstPayroll), new File(secondPayroll), new File(System.getProperty("user.home") + "/Desktop"));
+        //Se os arquivos existirem
+        if (firstPayroll != null && secondPayroll != null && !firstPayroll.exists() && !secondPayroll.exists()) {
+            //Pega arquivos com usuário e verifica se existem
+            if (!getFilesWithUser() || !Selector.verifyFile(firstPayroll.getAbsolutePath(), "csv") && Selector.verifyFile(secondPayroll.getAbsolutePath(), "csv")) {
+                JOptionPane.showMessageDialog(null, "Os arquivos escolhidos são inválidos!");
+                System.exit(0);
             }
         }
+
+        Comparar_Control controleComparar = new Comparar_Control(
+                firstPayroll, //Primeria folha
+                secondPayroll, //Segunda folha
+                new File(System.getProperty("user.home") + "/Desktop") //Local de Salvar
+        );
     }
 
-    private static boolean pegaArquivos() {
+    private static boolean getFilesWithUser() {
         //Pega 1º Arquivo
         View.render("Escolha a seguir a primeira folha a ser comparada...", "question");
-        resumo_1_arquivo = Selector.selectFile("C:/Users", "CSV (Separado por vírgulas)", "csv");
-        if (Selector.verifyFile(resumo_1_arquivo.getAbsolutePath(), "csv")) {
-
+        firstPayroll = Selector.selectFile("C:/Users", "CSV (Separado por vírgulas)", "csv");
+        firstPayroll = firstPayroll == null?new File(""):firstPayroll;
+        if (Selector.verifyFile(firstPayroll.getAbsolutePath(), true, "csv")) {
             //Pega 2º Arquivo
             View.render("Escolha a seguir a segunda folha a ser comparada...", "question");
-            resumo_2_arquivo = Selector.selectFile("C:/Users", "CSV (Separado por vírgulas)", "csv");
-            return Selector.verifyFile(resumo_2_arquivo.getAbsolutePath(), "csv");
+            secondPayroll = Selector.selectFile("C:/Users", "CSV (Separado por vírgulas)", "csv");
+            secondPayroll = secondPayroll == null?new File(""):secondPayroll;
+            return Selector.verifyFile(secondPayroll.getAbsolutePath(), true, "csv");
         } else {
             return false;
         }
