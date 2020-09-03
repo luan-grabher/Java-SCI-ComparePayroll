@@ -1,15 +1,13 @@
 package main;
 
-import ComparePayroll.Model.Entity.Contracheque;
-import java.math.BigDecimal;
-
 public class Teste {
 
     public static void main(String[] args) {
-        String texto = "PIS: 126.88970.71.4   CTPS: 88753   CBO: 513405   Função: Garcom";
-        String teste = Contracheque.getFuncaoFromString(texto);
+        String texto = "pis: 126.88970.71.4   CTPS: 88753   CBO: 513405   Função: Garcom";               
         
-        System.out.println("'" + teste + "'");
+        String regex = "(?i).*?PIS.*?";
+        System.out.println("Match: " + texto.matches(regex));
+        System.out.println("Replace: " + texto.replaceAll(regex,""));
     }
     
 }
