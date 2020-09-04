@@ -11,8 +11,8 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -21,6 +21,9 @@ public class Contracheques_Model {
 
     private static final int STRING_COMPARE_REGEX = 0;
     private static final int STRING_COMPARE_EQUALS = 1;
+
+    private static final int EVENT_TYPE_EARNING = 0;
+    private static final int EVENT_TYPE_DISCOUNT = 1;
 
     private final File arquivo;
     private final Map<String, Contracheque> payrolls = new TreeMap<>();
@@ -79,6 +82,12 @@ public class Contracheques_Model {
 
                 //Pega colunas, 0 limite de "-1" diz que irá pegar as colunas após o ultimo valor, mesmo que estejam vazias
                 String[] colunas = linhas[i].split(";", -1);
+                //Lista de colunas
+                List<String> cols = new LinkedList<>(Arrays.asList(colunas));
+                
+                if("3790".equals(cols.get(0)) && "08.csv".equals(arquivo.getName())){
+                    System.out.println(i);
+                }
 
                 //Atualizar colunas
                 updateMapOfColumnIfExists("name", colunas, STRING_COMPARE_EQUALS);
@@ -94,7 +103,7 @@ public class Contracheques_Model {
                     updateMapOfColumnIfExists("family_salary_base", colunas, STRING_COMPARE_EQUALS);
 
                 }//Se a primeira coluna for "Folha"
-                else if (updateMapOfColumnIfExists("sheet", colunas, STRING_COMPARE_EQUALS)) {
+                else if (payrollNow != null && colunas[column_code].equals(ComparePayroll.ini.get("ComparePayroll", "column_sheet"))) {
                     //Define bases
                     payrolls.get(payrollNow).setBaseInss(getBigDecimal(colunas[mapCols.get("inss_base")]));
                     payrolls.get(payrollNow).setValorInss(getBigDecimal(colunas[mapCols.get("inss_value")]));
@@ -103,6 +112,14 @@ public class Contracheques_Model {
                     payrolls.get(payrollNow).setBaseIrrf(getBigDecimal(colunas[mapCols.get("irrf_base")]));
                     payrolls.get(payrollNow).setBaseRais(getBigDecimal(colunas[mapCols.get("rais_base")]));
                     payrolls.get(payrollNow).setBaseSalarioFamilia(getBigDecimal(colunas[mapCols.get("family_salary_base")]));
+
+                    // Exibe no log se o robô não pegou nenhum provento ou desconto                     
+                    if (payrolls.get(payrollNow).proventos.isEmpty() || payrolls.get(payrollNow).descontos.isEmpty()) {
+                        Comparar_Control.log
+                                .append("\r\n(ALERTA) ").append(payrollNow)
+                                .append(" possui ").append(payrolls.get(payrollNow).proventos.size()).append(" proventos e ")
+                                .append(payrolls.get(payrollNow).descontos.size()).append(" descontos.");
+                    }
 
                     //Se tiver a coluna da folha
                     payrollNow = null;
@@ -140,8 +157,15 @@ public class Contracheques_Model {
                     updateMapOfColumnIfExists("discounts", colunas, STRING_COMPARE_EQUALS); //DESCONTOS
                     updateMapOfColumnIfExists("discounts_reference", colunas, STRING_COMPARE_REGEX, 1); //REFERENCIA
                     updateMapOfColumnIfExists("discounts_value", colunas, STRING_COMPARE_EQUALS, 1); //VALOR
-                } //Se tiver número inteiro na coluna de código (primeira coluna), ou será o nome do colaborador, ou proventos e referências, mas já entramos nas verificações do nome, entao ta safe
-                else if (isInteger(colunas[column_code])) {
+                } /**
+                 * Se tiver uma coluna com apenas numeros(codigo) outra com
+                 * somente letras(nome evento) e outra com apenas valor
+                 */
+                else if (payrollNow != null
+                        && Args.indexOf(colunas, Args.INDEX_OF_SEARCH_TYPE_REGEX_EQUALS, "[0-9]+") != -1 //Se Existir uma coluna com apenas números
+                        && Args.indexOf(colunas, Args.INDEX_OF_SEARCH_TYPE_REGEX_EQUALS, "[0-9.]+,[0-9]+") != -1 //Se Existir uma coluna com valores
+                        && Args.indexOf(colunas, Args.INDEX_OF_SEARCH_TYPE_REGEX_EQUALS, "[a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÍÏÓÔÕÖÚÇÑ ]+") != -1 //Se Existir uma coluna com apenas letras
+                        ) {
                     /**
                      * Para pegar os proventos e descontos, primeiro devemos,
                      * separar as colunas da primeira coluna, até a coluna de
@@ -157,20 +181,25 @@ public class Contracheques_Model {
                      * conjunto de colunas
                      */
 
-                    //Inicio e fim colunas proventos                    
-                    List<String> earningsCols = Arrays.asList(Arrays.copyOfRange(colunas, 0, mapCols.get("discounts") - 1));
-                    List<String> discountCols = Arrays.asList(Arrays.copyOfRange(colunas, mapCols.get("discounts"), colunas.length - 1));
+                    //Se tiver no minimo 1 coluna para poder diminuir depois e não ser menor do que 0
+                    if (mapCols.get("discounts") > 0
+                            && mapCols.get("earnings") > 0
+                            && mapCols.get("earnings") < mapCols.get("discounts")) {
+                        //Sublista para os proventos e descontos
+                        List<String> earningsCols = new ArrayList(cols.subList(0, mapCols.get("discounts")));
+                        List<String> discountCols = new ArrayList(cols.subList(mapCols.get("discounts"), cols.size()));
 
-                    //Remove espaços em branco
-                    earningsCols.removeAll(Collections.singleton(""));
-                    discountCols.removeAll(Collections.singleton(""));
+                        //Remove espaços em branco
+                        earningsCols.removeIf(s -> s.trim().equals(""));
+                        discountCols.removeIf(s -> s.trim().equals(""));
 
-                    insertEventIfExistsInColumns(earningsCols, payrollNow);
-                    insertEventIfExistsInColumns(discountCols, payrollNow);
-                } else {
-
+                        insertEventIfExistsInColumns(earningsCols, payrollNow, EVENT_TYPE_EARNING);
+                        insertEventIfExistsInColumns(discountCols, payrollNow, EVENT_TYPE_DISCOUNT);
+                    }
                 }
             } catch (Exception e) {
+                System.err.println("Erro no: " + payrollNow);
+                e.printStackTrace();
             }
         }
 
@@ -189,7 +218,7 @@ public class Contracheques_Model {
      * igual
      */
     private boolean updateMapOfColumnIfExists(String columnName, String[] cols, int stringCompareType) {
-        return updateMapOfColumnIfExists(columnName, cols, 0, 0);
+        return updateMapOfColumnIfExists(columnName, cols, stringCompareType, 0);
     }
 
     /**
@@ -208,10 +237,10 @@ public class Contracheques_Model {
         String columnFilter = ComparePayroll.ini.get("ComparePayroll", "column_" + columnName);
         if (stringCompareType == STRING_COMPARE_REGEX) {
             //Se o tipo de comparação for regex, compara por regex
-            pos = Args.indexOf(columnFilter, cols, skip);
+            pos = Args.indexOf(cols, Args.INDEX_OF_SEARCH_TYPE_REGEX_BETWEEN, columnFilter, skip);
         } else if (stringCompareType == STRING_COMPARE_EQUALS) {
             //Se o tipo de comparação dor string igual, procura por iguais
-            pos = Args.indexOf(cols, columnFilter, skip);
+            pos = Args.indexOf(cols, Args.INDEX_OF_SEARCH_TYPE_EQUALS_IGNORE_CASE, columnFilter, skip);
         }
 
         //Se encontrar alguma posição com aquele valor, retorna o valor
@@ -231,7 +260,7 @@ public class Contracheques_Model {
      * strings em branco
      * @return evento nas colunas informadas.
      */
-    private boolean insertEventIfExistsInColumns(List<String> cols, String payrollNow) {
+    private boolean insertEventIfExistsInColumns(List<String> cols, String payrollNow, int eventType) {
         /**
          * Para pegar os proventos e descontos, primeiro devemos, separar as
          * colunas da primeira coluna, até a coluna de descontos. Depois, nas
@@ -247,7 +276,8 @@ public class Contracheques_Model {
 
         try {
             //Se existir 3 ou 4 colunas, então está ok
-            if (cols.size() == 3 || cols.size() == 4) {
+            int size = cols.size();
+            if (size == 3 || size == 4) {
                 //Codigo sempre será na primeira coluna e o nome na segunda
                 int code = Integer.valueOf(cols.get(0));
                 String name = cols.get(1).replaceAll("[^a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÍÏÓÔÕÖÚÇÑ ]", "").trim();
@@ -261,15 +291,22 @@ public class Contracheques_Model {
                 //Valor sempre será a ultima coluna
                 BigDecimal value = new BigDecimal(cols.get(cols.size() - 1).replaceAll("\\.", "").replaceAll(",", "."));
 
-                payrolls.get(payrollNow).proventos.add(
-                        new Evento(code, name, reference, value)
-                );
+                if (eventType == EVENT_TYPE_EARNING) {
+                    payrolls.get(payrollNow).proventos.add(
+                            new Evento(code, name, reference, value)
+                    );
+                } else if (eventType == EVENT_TYPE_DISCOUNT) {
+                    payrolls.get(payrollNow).descontos.add(
+                            new Evento(code, name, reference, value)
+                    );
+                }
                 return true;
             }
 
             return false;
 
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }

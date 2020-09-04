@@ -27,11 +27,11 @@ public class Comparar_Model {
     }
 
     public String getDemitidos() {
-        return renderAdmOuDem("Demitidos", demitidos);
+        return renderAdmOuDem("Demitidos (Não estão no segundo arquivo)", demitidos);
     }
 
     public String getAdmitidos() {
-        return renderAdmOuDem("Admitidos", admitidos);
+        return renderAdmOuDem("Admitidos (Não estão no primeiro arquivo)", admitidos);
     }
 
     private String renderAdmOuDem(String nome, List<List<String>> lista) {
@@ -42,7 +42,7 @@ public class Comparar_Model {
                 List<String> vals = lista.get(i);
                 for (int j = 0; j < vals.size(); j++) {
                     String val = vals.get(j);
-                    str.append(";" + val);
+                    str.append(";").append(val);
                 }
                 str.append("\r\n");
             }
@@ -57,23 +57,29 @@ public class Comparar_Model {
         if(diferencas.size() > 0){
             StringBuilder str = new StringBuilder("\r\n");
             for (int i = 0; i < diferencas.size(); i++) {
-                DiferencasColaborador diferenca = diferencas.get(i);
-                str.append("\r\n\r\n(");
-                str.append(diferenca.getCodigoColaborador());
-                str.append(")");
-                str.append(diferenca.getColaborador());
+                DiferencasColaborador employeeDiferences = diferencas.get(i);
                 
-                str.append("\r\n;Diferença;Valor Diferença;" + nomeResumo1.replaceAll("\\.", "-") + ";" + nomeResumo2.replaceAll("\\.", "-"));
-                
-                for (int j = 0; j < diferenca.diferencas.size(); j++) {
-                    Diferenca dif = diferenca.diferencas.get(j);
-                    
-                    str.append("\r\n");
-                    str.append(";" + dif.getDescricao());
-                    str.append(";" + dif.getDiferenca().toString().replaceAll("\\.", ","));
-                    str.append(";" + dif.getValor_1().toString().replaceAll("\\.", ","));
-                    str.append(";" + dif.getValor_2().toString().replaceAll("\\.", ","));
+                //Não exibe diferenças se não houver diferenças
+                if(employeeDiferences.diferencas.size() > 0){
+                    str.append("\r\n\r\n(");
+                    str.append(employeeDiferences.getCodigoColaborador());
+                    str.append(")");
+                    str.append(employeeDiferences.getColaborador());
+
+                    str.append("\r\n;Diferença;Valor Diferença;").append(nomeResumo1.replaceAll("\\.", "-")).append(";").append(nomeResumo2.replaceAll("\\.", "-"));
+
+                    for (int j = 0; j < employeeDiferences.diferencas.size(); j++) {
+                        Diferenca dif = employeeDiferences.diferencas.get(j);
+
+                        str.append("\r\n");
+                        str.append(";").append(dif.getDescricao());
+                        str.append(";").append(dif.getDiferenca().toString().replaceAll("\\.", ","));
+                        str.append(";").append(dif.getValor_1().toString().replaceAll("\\.", ","));
+                        str.append(";").append(dif.getValor_2().toString().replaceAll("\\.", ","));
+                    }
                 }
+                
+
             }
             return str.toString();
         }else{
@@ -156,6 +162,7 @@ public class Comparar_Model {
             } else {
                 difColab.diferencas.add(
                         new Diferenca(
+                                tipoDiferenca + " - " +
                                 evento1.getNome(),
                                 evento1.getValor().multiply(new BigDecimal(-1)),
                                 evento1.getValor(),
@@ -173,6 +180,7 @@ public class Comparar_Model {
             if (!evento1_OP.isPresent()) {
                 difColab.diferencas.add(
                         new Diferenca(
+                                tipoDiferenca + " - " +
                                 evento2.getNome(),
                                 evento2.getValor(),
                                 evento2.getValor(),
