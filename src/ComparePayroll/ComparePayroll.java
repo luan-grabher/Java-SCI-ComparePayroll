@@ -1,12 +1,13 @@
 package ComparePayroll;
 
-import ComparePayroll.Control.Comparar_Control;
 import java.io.File;
 import SimpleView.View;
 import fileManager.Args;
 import fileManager.Selector;
 import javax.swing.JOptionPane;
 import org.ini4j.Ini;
+
+import ComparePayroll.Control.Comparar_Control;
 
 public class ComparePayroll {
 

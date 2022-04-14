@@ -1,4 +1,5 @@
-package main;
+package ComparePayroll.test;
+
 
 public class Teste {
 
