@@ -26,22 +26,16 @@ public class Contracheques_Model {
     private static final int EVENT_TYPE_DISCOUNT = 1;
 
     private final File arquivo;
-    private final Map<String, Contracheque> payrolls = new TreeMap<>();
-    private Integer payrollsFinded = 0;
+    public final Map<String, Contracheque> payrolls = new TreeMap<>();
+    public Integer payrollsFinded = 0;
 
     //Mapeamento de colunas
     private static final Map<String, Integer> mapCols = new HashMap<>();
 
     public Contracheques_Model(File arquivo) {
         this.arquivo = arquivo;
-
-        criarListaContracheques();
-
-        Comparar_Control.log.append("\r\nNo arquivo '").append(arquivo.getName()).append("':");
-        Comparar_Control.log.append("\r\nForam encontradas ").append(payrollsFinded).append(" folhas de pagamento.");
-        Comparar_Control.log.append("\r\nConsiderei ").append(payrolls.size()).append(" folhas de pagamento nos cálculos.");
-        Comparar_Control.log.append("\r\n\r\n");
     }
+    
 
     public List<Contracheque> getContracheques() {
         //Cria uma lista para retornar
@@ -55,7 +49,7 @@ public class Contracheques_Model {
         return list;
     }
 
-    private void criarListaContracheques() {
+    public void criarListaContracheques() {
         //Pega texto do arquivo
         String textoArquivo = FileManager.getText(arquivo.getAbsolutePath());
 
@@ -113,12 +107,9 @@ public class Contracheques_Model {
                     payrolls.get(payrollNow).setBaseRais(getBigDecimal(colunas[mapCols.get("rais_base")]));
                     payrolls.get(payrollNow).setBaseSalarioFamilia(getBigDecimal(colunas[mapCols.get("family_salary_base")]));
 
-                    // Exibe no log se o robô não pegou nenhum provento ou desconto                     
+                    // Exibe alerta se o robô não pegou nenhum provento ou desconto                     
                     if (payrolls.get(payrollNow).proventos.isEmpty() || payrolls.get(payrollNow).descontos.isEmpty()) {
-                        Comparar_Control.log
-                                .append("\r\n(ALERTA) ").append(payrollNow)
-                                .append(" possui ").append(payrolls.get(payrollNow).proventos.size()).append(" proventos e ")
-                                .append(payrolls.get(payrollNow).descontos.size()).append(" descontos.");
+                        Comparar_Control.warnings.put(arquivo.getName(), "Nenhum provento ou desconto encontrado para o contracheque " + payrolls.get(payrollNow).getColaborador());
                     }
 
                     //Se tiver a coluna da folha

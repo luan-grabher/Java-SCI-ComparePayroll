@@ -1,6 +1,10 @@
 package ComparePayroll;
 
 import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
 import SimpleView.View;
 import fileManager.Args;
 import fileManager.Selector;
@@ -8,6 +12,8 @@ import javax.swing.JOptionPane;
 import org.ini4j.Ini;
 
 import ComparePayroll.Control.Comparar_Control;
+import Entity.Executavel;
+import Executor.Execution;
 
 public class ComparePayroll {
 
@@ -46,8 +52,26 @@ public class ComparePayroll {
                 secondPayroll, //Segunda folha
                 new File(System.getProperty("user.home") + "/Desktop") //Local de Salvar
         );
+
+        //map of executavel
+        Map<String, Executavel> execs = new LinkedHashMap<>();
+        execs.put("Pegando informações dos arquivos", controleComparar.new createListOfModels());
+        execs.put("Comparando os arquivos", controleComparar.new comparePayrolls());
+        execs.put("Gerando relatório", controleComparar.new generateReport());
+
+        Execution execution = new Execution("Comparar folhas de pagamento");
+        execution.setExecutionMap(execs);
+        execution.runExecutables();
+        
+        execution.endExecution();
+
+        //Show message to user 'Arquivo salvo na área de trabalho'
+        JOptionPane.showMessageDialog(null, "Arquivo salvo na área de trabalho");
     }
 
+    /*
+        * Pega arquivos com usuário e verifica se existem
+        */
     private static boolean getFilesWithUser() {
         //Pega 1º Arquivo
         View.render("Escolha a seguir a primeira folha a ser comparada...", "question");

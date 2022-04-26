@@ -6,7 +6,9 @@ import ComparePayroll.Model.Entity.DiferencasColaborador;
 import ComparePayroll.Model.Entity.Evento;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class Comparar_Model {
@@ -14,11 +16,14 @@ public class Comparar_Model {
     private final List<Contracheque> lista_1;
     private final List<Contracheque> lista_2;
 
-    private List<List<String>> demitidos = new ArrayList<>();
-    private List<List<String>> admitidos = new ArrayList<>();
+    public List<Map<String,String>> demitidos = new ArrayList<>();
+    public List<Map<String,String>> admitidos = new ArrayList<>();
 
-    private List<DiferencasColaborador> diferencas = new ArrayList<>();
+    public List<DiferencasColaborador> diferencas = new ArrayList<>();
 
+    /*
+        Usando os contra-cheques de cada folha, monta uma lista de diferenças, admitidos e demitidos.
+    */
     public Comparar_Model(List<Contracheque> lista_1, List<Contracheque> lista_2) {
         this.lista_1 = lista_1;
         this.lista_2 = lista_2;
@@ -26,15 +31,8 @@ public class Comparar_Model {
         montarDiferencas();
     }
 
-    public String getDemitidos() {
-        return renderAdmOuDem("Demitidos (Não estão no segundo arquivo)", demitidos);
-    }
-
-    public String getAdmitidos() {
-        return renderAdmOuDem("Admitidos (Não estão no primeiro arquivo)", admitidos);
-    }
-
-    private String renderAdmOuDem(String nome, List<List<String>> lista) {
+    //Renderiza os admitidos e demitidos no para o csv
+    public String renderAdmOuDem(String nome, List<List<String>> lista) {
         if (lista.size() > 0) {
             StringBuilder str = new StringBuilder(nome + ";Codigo;Nome;Funcao;Salario\r\n");
 
@@ -53,6 +51,7 @@ public class Comparar_Model {
         }
     }
     
+    //Renderiza as diferenças no para o csv
     public String renderDiferencas(String nomeResumo1, String nomeResumo2){
         if(diferencas.size() > 0){
             StringBuilder str = new StringBuilder("\r\n");
@@ -87,6 +86,7 @@ public class Comparar_Model {
         }
     }
 
+    //Monta a lista de diferenças, admitidos e demitidos
     private void montarDiferencas() {
         //Montar lista de funcionários demitidos
         definirColaboradoresDiferentes(lista_1, lista_2, demitidos);
@@ -217,18 +217,25 @@ public class Comparar_Model {
         }
     }
 
-    private void definirColaboradoresDiferentes(List<Contracheque> lista1, List<Contracheque> lista2, List<List<String>> diferentes) {
+    /**
+     * Adiciona na lista de diferentes passada os colaboradores que estão na lista 1 e não estão na lista 2
+     * @param lista1 Lista de colaboradores 1
+     * @param lista2 Lista de colaboradores 2
+     * @param diferentes Lista de colaboradores diferentes
+     */
+    private void definirColaboradoresDiferentes(List<Contracheque> lista1, List<Contracheque> lista2, List<Map<String,String>> diferentes) {
         for (int i = 0; i < lista1.size(); i++) {
             Contracheque cont = lista1.get(i);
             long existe = lista2.stream().filter(c -> c.getCodigoColaborador() == cont.getCodigoColaborador()).count();
 
             if (existe == (long) 0) {
-                List<String> demit = new ArrayList<>();
-                demit.add(String.valueOf(cont.getCodigoColaborador()));
-                demit.add(cont.getColaborador());
-                demit.add(cont.getFuncao());
-                demit.add(cont.getSalarioBase().toString());
-                diferentes.add(demit);
+                Map<String,String> dif = new HashMap<>();
+                dif.put("code", String.valueOf(cont.getCodigoColaborador()));
+                dif.put("name", cont.getColaborador());
+                dif.put("function", cont.getFuncao());
+                dif.put("salary", cont.getSalarioBase().toString());
+
+                diferentes.add(dif);
             }
         }
     }
