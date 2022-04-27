@@ -12,25 +12,40 @@ import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.ini4j.Profile.Section;
 
 import ComparePayroll.ComparePayroll;
 import ComparePayroll.Model.Entity.Diferenca;
 import ComparePayroll.Model.Entity.DiferencasColaborador;
 import JExcel.JExcel;
 import fileManager.FileManager;
+import fileManager.StringFilter;
 
 public class TemplateExcelModel {
     private final Comparar_Model model;
     private final File saveFile;
+    private Map<String, StringFilter> ignores =  new HashMap<>();
 
     private SXSSFWorkbook wb;
 
 
     public TemplateExcelModel(Comparar_Model model, File saveFolder) {
         this.model = model;
+        generateIgnoreMap();
 
         //Set saveFile 'Comparação de Folhas de Pagamento.xlsx' in desktop
         saveFile = new File(saveFolder.getAbsolutePath() + "/Comparação de Folhas de Pagamento.xlsx");
+    }
+
+    //generate ignore map - with section ignored_differences in ini, put in map all ignored differences as StringFilter
+    public void generateIgnoreMap() {
+        //get section ignored_differences in ComparePayroll.ini
+        Section ignored_differences = ComparePayroll.ini.get("ignored_differences");
+
+        //for each ignored difference, put in map as StringFilter
+        for (String key : ignored_differences.keySet()) {
+            ignores.put(key, new StringFilter(ignored_differences.get(key)));
+        }
     }
 
     //Copy excel 'compare_payroll_template.xlsx' to 'compare_payroll_template_result.xlsx'
@@ -181,6 +196,20 @@ public class TemplateExcelModel {
     }
 
 
+    //is ignore - check if any ignore in ignores is filter of string
+    public boolean isIgnore(String filter){
+        //for each map in ignores
+        for(Map.Entry<String,StringFilter> ignore : ignores.entrySet()){
+            //if is filter of string, return true
+            if(ignore.getValue().filterOfString(filter)){
+                return true;
+            }
+        }
+
+        //return false
+        return false;
+    }
+
     //putDifferences - put differences in sheet 'Sheet Diferencas' on excel
     public void putDifferences(String file1name, String file2name){
         //set ini section 'Sheet Diferencas'
@@ -223,20 +252,23 @@ public class TemplateExcelModel {
 
             //For each diferenca in differrence.diferencas, add +1 in row, create row, if not exists, put values
             for(Diferenca diferenca : difference.diferencas){
-                //get row
-                r = nextRow(sh, row);
-                
-                //PUT DIFFERENCES
-                //put value in col_lcto
-                r.createCell(cols.get("lcto")).setCellValue(diferenca.getDescricao());
-                //put value in col_difference
-                r.createCell(cols.get("difference")).setCellValue(diferenca.getDiferenca().toPlainString());
-                //put value in col_current_period
-                r.createCell(cols.get("current_period")).setCellValue(diferenca.getValor_1().toPlainString());
-                //put value in col_last_period
-                r.createCell(cols.get("last_period")).setCellValue(diferenca.getValor_2().toPlainString());
-                //add +1 in row
-                row++;
+                //if descricao of diferenca is not ignore, put values
+                if(!isIgnore(diferenca.getDescricao())){
+                    //get row
+                    r = nextRow(sh, row);
+                    
+                    //PUT DIFFERENCES
+                    //put value in col_lcto
+                    r.createCell(cols.get("lcto")).setCellValue(diferenca.getDescricao());
+                    //put value in col_difference
+                    r.createCell(cols.get("difference")).setCellValue(diferenca.getDiferenca().toPlainString());
+                    //put value in col_current_period
+                    r.createCell(cols.get("current_period")).setCellValue(diferenca.getValor_1().toPlainString());
+                    //put value in col_last_period
+                    r.createCell(cols.get("last_period")).setCellValue(diferenca.getValor_2().toPlainString());
+                    //add +1 in row
+                    row++;
+                }
             }
 
             row++;
