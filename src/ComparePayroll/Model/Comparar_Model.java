@@ -31,61 +31,6 @@ public class Comparar_Model {
         montarDiferencas();
     }
 
-    //Renderiza os admitidos e demitidos no para o csv
-    public String renderAdmOuDem(String nome, List<List<String>> lista) {
-        if (lista.size() > 0) {
-            StringBuilder str = new StringBuilder(nome + ";Codigo;Nome;Funcao;Salario\r\n");
-
-            for (int i = 0; i < lista.size(); i++) {
-                List<String> vals = lista.get(i);
-                for (int j = 0; j < vals.size(); j++) {
-                    String val = vals.get(j);
-                    str.append(";").append(val);
-                }
-                str.append("\r\n");
-            }
-
-            return str.toString();
-        } else {
-            return "";
-        }
-    }
-    
-    //Renderiza as diferenças no para o csv
-    public String renderDiferencas(String nomeResumo1, String nomeResumo2){
-        if(diferencas.size() > 0){
-            StringBuilder str = new StringBuilder("\r\n");
-            for (int i = 0; i < diferencas.size(); i++) {
-                DiferencasColaborador employeeDiferences = diferencas.get(i);
-                
-                //Não exibe diferenças se não houver diferenças
-                if(employeeDiferences.diferencas.size() > 0){
-                    str.append("\r\n\r\n(");
-                    str.append(employeeDiferences.getCodigoColaborador());
-                    str.append(")");
-                    str.append(employeeDiferences.getColaborador());
-
-                    str.append("\r\n;Diferença;Valor Diferença;").append(nomeResumo1.replaceAll("\\.", "-")).append(";").append(nomeResumo2.replaceAll("\\.", "-"));
-
-                    for (int j = 0; j < employeeDiferences.diferencas.size(); j++) {
-                        Diferenca dif = employeeDiferences.diferencas.get(j);
-
-                        str.append("\r\n");
-                        str.append(";").append(dif.getDescricao());
-                        str.append(";").append(dif.getDiferenca().toString().replaceAll("\\.", ","));
-                        str.append(";").append(dif.getValor_1().toString().replaceAll("\\.", ","));
-                        str.append(";").append(dif.getValor_2().toString().replaceAll("\\.", ","));
-                    }
-                }
-                
-
-            }
-            return str.toString();
-        }else{
-            return "";
-        }
-    }
-
     //Monta a lista de diferenças, admitidos e demitidos
     private void montarDiferencas() {
         //Montar lista de funcionários demitidos
@@ -153,7 +98,7 @@ public class Comparar_Model {
                             new Diferenca(
                                     tipoDiferenca + " - " +
                                     evento1.getNome(),
-                                    evento2.getValor().subtract(evento1.getValor()),
+                                    evento1.getValor().subtract(evento2.getValor()),
                                     evento1.getValor(),
                                     evento2.getValor()
                             )
@@ -209,7 +154,7 @@ public class Comparar_Model {
             difColab.diferencas.add(
                     new Diferenca(
                             nomeBigDecimal,
-                            contra.getBig(nomeBigDecimal).subtract(cont.getBig(nomeBigDecimal)),
+                            cont.getBig(nomeBigDecimal).subtract(contra.getBig(nomeBigDecimal)),
                             cont.getBig(nomeBigDecimal),
                             contra.getBig(nomeBigDecimal)
                     )

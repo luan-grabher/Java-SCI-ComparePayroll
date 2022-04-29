@@ -8,6 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -25,6 +33,7 @@ public class TemplateExcelModel {
     private final Comparar_Model model;
     private final File saveFile;
     private Map<String, StringFilter> ignores =  new HashMap<>();
+    private CellStyle paintedCellStyle = null;
 
     private SXSSFWorkbook wb;
 
@@ -60,16 +69,42 @@ public class TemplateExcelModel {
 
             wb = new SXSSFWorkbook(new XSSFWorkbook(templateFile),-1);
 
+            //create cell style for painted cells
+            createPaintedCellStyle();
         } catch (Exception e) {            
             e.printStackTrace();
             throw new Error("Ocorreu o seguinte erro: " + e.getMessage());
         }
     }
+
+    //create painted cell style with background color red
+    public void createPaintedCellStyle(){
+        paintedCellStyle = wb.createCellStyle();
+        paintedCellStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
+    }
     
+    //evaluate formulas
+    public void evaluateFormulas(){
+        FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
+        for (Sheet sheet : wb) {
+            for (Row r : sheet) {
+                for (Cell c : r) {
+                    if (c.getCellType() == CellType.FORMULA) {
+                        evaluator.evaluateFormulaCell(c);
+                    }
+                }
+            }
+        }
+        
+    }
+
     //Save workbook
     public void save(){
         //save workbook
         try {
+            //calculate excel formulas
+            evaluateFormulas();
+
             //save workbook with filestream of saveFile            
             JExcel.saveWorkbookAs(saveFile, wb);
         } catch (Exception e) {
@@ -195,7 +230,6 @@ public class TemplateExcelModel {
         }
     }
 
-
     //is ignore - check if any ignore in ignores is filter of string
     public boolean isIgnore(String filter){
         //for each map in ignores
@@ -237,16 +271,29 @@ public class TemplateExcelModel {
             //PUT HEADERS
             //put value in col_code
             r.createCell(cols.get("code")).setCellValue(difference.getCodigoColaborador());
+            //set painted cell style in col_code
+            r.getCell(cols.get("code")).setCellStyle(paintedCellStyle);
             //put value in col_name
             r.createCell(cols.get("name")).setCellValue(difference.getColaborador());
+            //set painted cell style in col_name
+            r.getCell(cols.get("name")).setCellStyle(paintedCellStyle);
             //put value in col_lcto
             r.createCell(cols.get("lcto")).setCellValue("Diferença");
+            //set painted cell style in col_lcto
+            r.getCell(cols.get("lcto")).setCellStyle(paintedCellStyle);
             //put value in col_difference
             r.createCell(cols.get("difference")).setCellValue("Valor Diferença");
+            //set painted cell style in col_difference
+            r.getCell(cols.get("difference")).setCellStyle(paintedCellStyle);
             //put value in col_current_period
             r.createCell(cols.get("current_period")).setCellValue(file1name);
+            //set painted cell style in col_current_period
+            r.getCell(cols.get("current_period")).setCellStyle(paintedCellStyle);
             //put value in col_last_period
-            r.createCell(cols.get("last_period")).setCellValue(file2name);            
+            r.createCell(cols.get("last_period")).setCellValue(file2name);  
+            //set painted cell style in col_last_period
+            r.getCell(cols.get("last_period")).setCellStyle(paintedCellStyle);
+
             //add +1 in row
             row++;
 
