@@ -98,7 +98,7 @@ public class Comparar_Model {
                             new Diferenca(
                                     tipoDiferenca + " - " +
                                     evento1.getNome(),
-                                    evento1.getValor().subtract(evento2.getValor()),
+                                    evento1.getValor().subtract(evento2.getValor()).abs(),
                                     evento1.getValor(),
                                     evento2.getValor()
                             )
@@ -154,7 +154,7 @@ public class Comparar_Model {
             difColab.diferencas.add(
                     new Diferenca(
                             nomeBigDecimal,
-                            cont.getBig(nomeBigDecimal).subtract(contra.getBig(nomeBigDecimal)),
+                            cont.getBig(nomeBigDecimal).subtract(contra.getBig(nomeBigDecimal)).abs(),
                             cont.getBig(nomeBigDecimal),
                             contra.getBig(nomeBigDecimal)
                     )
